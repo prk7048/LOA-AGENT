@@ -20,7 +20,7 @@ class PostgresDB:
         """with 문에 진입할 때 실행 (연결)"""
         try:
             self.conn = psycopg2.connect(
-                host = "localhost",
+                host = os.getenv("POSTGRES_HOST"),
                 database=os.getenv("POSTGRES_DB"),
                 user=os.getenv("POSTGRES_USER"),
                 password=os.getenv("POSTGRES_PASSWORD"),
@@ -54,8 +54,8 @@ def init_db():
         server_name VARCHAR(20),
         character_class VARCHAR(20),
         item_avg_level FLOAT,
-        combat_Power FLOAT,
-        update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        combat_power FLOAT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """
 
@@ -66,3 +66,28 @@ def init_db():
             print("'characters' 테이블 준비 완료")
     except Exception as e:
         print(f"테이블 생성 중 오류 발생: {e}")
+
+def upsert_character(char_data):
+    """
+    캐릭터 정보 DB에 저장하거나 갱신
+    char_data: {'CharacterName': '은제', 'ServerName': '루페온', ...} 형태의 딕셔너리
+    """
+
+    sql = """
+    INSERT INTO characters (character_name, server_name, character_class, item_avg_level, combat_power)
+    VALUES (%(CharacterName)s, %(ServerName)s, %(CharacterClassName)s, %(ItemAvgLevel)s, %(CombatPower)s)
+    ON CONFLICT (character_name)
+    DO UPDATE SET
+        item_avg_level = EXCLUDED.item_avg_level,
+        combat_power = EXCLUDED.combat_power,
+        updated_at = CURRENT_TIMESTAMP;
+    """
+
+    try:
+        with PostgresDB() as cur:
+            # 딕셔너리를 통째로 넘기면, %(Key)s 부분에 알아서 들어감
+            cur.execute(sql, char_data)
+            print(f"저장완료 {char_data['CharacterName']}")
+    except Exception as e:
+        print(f"저장 실패 {e}")
+            
