@@ -1,52 +1,86 @@
-import requests
 import os
+import requests
+import json
+import concurrent.futures
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class LostArkAPI:
-    """
-    로스트아크 API와 통신하는 클래스
-    """
     def __init__(self):
-        self.api_key = os.getenv("LOA_API_KEY")
-        self.base_url = "https://developer-lostark.game.onstove.com"
+        self.api_key = os.getenv("LOA_API_KEY") 
+        self.token = self.api_key 
         self.headers = {
-            "accept" : "appllication/json",
-            "authorization": f"bearer {self.api_key}"
+            'accept': 'application/json',
+            'authorization': f'bearer {self.api_key}'
         }
+        self.base_url = "https://developer-lostark.game.onstove.com"
 
-    def get_character_profile(self, character_name):
-        """
-        캐릭터 이름으로 캐릭터 정보 조회
-        """
-        # 1. URL 만들기 (API 문서 기준: /armories/characters/{characterName}/profiles)
-        # URL 인코딩은 requests가 알아서 해줍니다.
-        url = f"{self.base_url}/armories/characters/{character_name}/profiles"
-
+    def get_character_profile(self, char_name):
+        url = f"{self.base_url}/armories/characters/{char_name}/profiles"
         try:
-            # 2. GET 요청 만들기
             response = requests.get(url, headers=self.headers)
-
             if response.status_code == 200:
-                data = response.json()
-
-                if data is None:
-                    return None
-                
-                # 4. DB 컬럼 이름에 맞춰서 데이터 가공 (Mapping)
-                # API가 주는 키 값 : CharacterName, ServerName, CharacterClassName, ItemAvgLevel                
-                parsed_data = {
-                    "CharacterName": data['CharacterName'],
-                    "ServerName": data['ServerName'],
-                    "CharacterClassName": data['CharacterClassName'],
-                    "ItemAvgLevel": float(data['ItemAvgLevel'].replace(",", "")), # "1,680.00" -> 1680.0 변환
-                    "CombatPower": float(data['Stats'][0]['Value']) if 'Stats' in data else 0 # 공격력 예시
-                }
-                return parsed_data
-            
-            else:
-                print ("API 요청 실패 : {response.status_code} - {response.text}")
-                return None
-            
-        except Exception as e:
-            print(f"통신 에러 {e}")
+                return response.json()
             return None
+        except:
+            return None
+
+    def get_characters(self, representative_name):
+        representative_name = representative_name.strip()
         
+        # 1. 원정대 목록 조회
+        siblings_url = f"{self.base_url}/characters/{representative_name}/siblings"
+        try:
+            resp = requests.get(siblings_url, headers=self.headers)
+            if resp.status_code != 200:
+                print(f"⚠️ 원정대 조회 실패: {resp.status_code}")
+                return []
+            siblings = resp.json()
+            if not siblings: return []
+        except Exception as e:
+            print(f"❌ API 요청 에러: {e}")
+            return []
+
+        # 2. 상세 정보 병렬 조회
+        enriched_data = []
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            future_to_char = {
+                executor.submit(self.get_character_profile, char['CharacterName']): char 
+                for char in siblings
+            }
+            
+            for future in concurrent.futures.as_completed(future_to_char):
+                char_basic = future_to_char[future]
+                profile_detail = future.result()
+                
+                combat_power = 0
+                
+                if profile_detail:
+                    # [수정됨] CombatPower 파싱 로직 강화 (쉼표와 소수점 처리)
+                    # "1,743.76" -> 1743
+                    if 'CombatPower' in profile_detail:
+                        try:
+                            raw_val = str(profile_detail['CombatPower']) # 일단 문자열로
+                            clean_val = raw_val.replace(',', '')         # 쉼표 제거 "1743.76"
+                            combat_power = int(float(clean_val))         # 실수 변환 후 정수화
+                        except:
+                            combat_power = 0
+                    
+                    # (만약 CombatPower가 0이면 예비로 공격력 가져오기 - 혹시 모르니 유지)
+                    if combat_power == 0 and 'Stats' in profile_detail:
+                        for stat in profile_detail['Stats']:
+                            if stat['Type'] == '공격력':
+                                try:
+                                    combat_power = int(stat['Value'].replace(',', ''))
+                                except: pass
+                                break
+                
+                char_data = char_basic.copy()
+                char_data['CombatPower'] = combat_power
+                enriched_data.append(char_data)
+                
+        # 3. 정렬 (전투력 높은 순)
+        enriched_data.sort(key=lambda x: int(x.get('CombatPower', 0)), reverse=True)
+        return enriched_data
