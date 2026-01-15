@@ -1,4 +1,4 @@
-# 🛡️ LOA AGENT v3 - 사용자 맞춤형 스케줄링 및 데이터 시각화 서비스
+# 🛡️ LOA AGENT - 사용자 맞춤형 스케줄링 및 데이터 시각화 서비스
 
 ![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.31-red?logo=streamlit)
@@ -47,8 +47,8 @@
 
 1. **저장소 클론**
    ```bash
-   git clone [https://github.com/prk7048/Loa_Agent.git](https://github.com/prk7048/Loa_Agent.git)
-   cd LOA-AGENT-v3```
+   git clone [https://github.com/prk7048/LOA-AGENT.git](https://github.com/prk7048/LOA-AGENT.git)
+   cd LOA-AGENT```
 
 2. 환경 변수 설정 (.env)
     프로젝트 루트에 .env 파일을 생성하고 API 키를 입력합니다.
