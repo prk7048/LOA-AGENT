@@ -39,8 +39,9 @@ def render_todo_list():
 
     # 상단 배너 출력
     st.info(f"""
-    📢 **목표일({target_date})까지 남은 시간: {weeks_left}주 ({days_left}일)**
-    \n💰 주간 원정대 수익: **{weekly_total_income:,} G** \n🚀 목표일까지 예상 수익: **{projected_income:,} G** (현재 보유금 미포함)
+     **목표일({target_date})까지 남은 시간: {weeks_left}주 ({days_left}일)**
+    \n 주간 원정대 수익: **{weekly_total_income:,} G**  
+    \n 목표일까지 예상 수익: **{projected_income:,} G**
     """)
 
     st.write("") 
@@ -51,11 +52,11 @@ def render_todo_list():
     with st.container(border=True):
         c_head, c_btn = st.columns([8, 2])
         with c_head:
-            st.markdown("### 🏰 원정대 통합 숙제")
+            st.markdown("### 원정대 통합 숙제")
         with c_btn:
             with st.expander("관리 ⚙️"):
                 # 1. 숙제 이름 입력
-                new_task = st.text_input("숙제 이름", placeholder="예: 비탄의 섬")
+                new_task = st.text_input("숙제 이름", placeholder="예: 카게")
                 
                 # 2. [NEW] 리셋 주기 선택
                 # UI 편의를 위해 한글로 보여주고, 실제 값은 영어로 매핑
@@ -79,7 +80,7 @@ def render_todo_list():
     # ---------------------------------------------------------
     # 3. 탭 및 캐릭터 카드 (기존 로직 유지)
     # ---------------------------------------------------------
-    sub_tab_weekly, sub_tab_daily = st.tabs(["📅 주간 숙제", "⚡ 일일 숙제"])
+    sub_tab_weekly, sub_tab_daily = st.tabs(["주간 숙제", "일일 숙제"])
 
     try:
         with PostgresDB() as cur:
@@ -150,7 +151,7 @@ def _render_character_cards(characters, all_todos, target_tab):
                                 _update_task_status(task['id'], task['total_count'], checked)
 
                 elif target_tab == "DAILY":
-                    st.checkbox("카.가.길 (통합)", key=f"kagagil_{char_name}")
+                    st.checkbox("카.가.길", key=f"kagagil_{char_name}")
                     daily_tasks = [t for t in my_tasks if t['category'] == '일일']
                     for task in daily_tasks:
                         is_done = (task['current_count'] >= task['total_count'])

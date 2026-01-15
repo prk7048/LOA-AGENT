@@ -170,7 +170,7 @@ def refresh_weekly_raids(character_name, item_lv, combat_power):
         print(f"❌ 주간 갱신 실패: {e}")
 
 def add_daily_tasks(character_name):
-    defaults = [("카오스 던전", 1), ("가디언 토벌", 1)]
+    defaults = []
     sql = "INSERT INTO todos (character_name, task_name, category, total_count, reset_cycle, gold_reward) VALUES (%s, %s, '일일', %s, 'DAILY', 0) ON CONFLICT (character_name, task_name) DO NOTHING;"
     try:
         with PostgresDB() as cur:
