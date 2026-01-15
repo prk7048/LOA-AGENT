@@ -31,7 +31,9 @@ class PostgresDB:
         if self.conn: self.conn.close()
 
 def init_db():
-    """DB 테이블 구조 생성 (없을 때만)"""
+    """DB 테이블 초기화 (리셋 규칙 컬럼 추가)"""
+    
+    # 1. 캐릭터 & 숙제 테이블 (기존 유지)
     create_character_table_sql = """
     CREATE TABLE IF NOT EXISTS characters (
         character_name VARCHAR(50) PRIMARY KEY,
@@ -60,14 +62,21 @@ def init_db():
         CONSTRAINT unique_task_per_char UNIQUE (character_name, task_name)
     );
     """
+    
+    # 3. [수정됨] 원정대 커스텀 숙제 (리셋 규칙 추가)
+    # reset_type: 'DAILY', 'WEEKLY', 'INTERVAL'(N일 간격)
+    # reset_value: INTERVAL일 때 며칠 간격인지 (예: 2)
     create_exp_tasks_sql = """
     CREATE TABLE IF NOT EXISTS expedition_tasks (
         id SERIAL PRIMARY KEY,
         task_name VARCHAR(100) NOT NULL UNIQUE,
         is_checked BOOLEAN DEFAULT FALSE,
+        reset_type VARCHAR(20) DEFAULT 'WEEKLY', 
+        reset_value INT DEFAULT 1,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """
+
     create_settings_sql = """
     CREATE TABLE IF NOT EXISTS app_settings (
         key VARCHAR(50) PRIMARY KEY,
@@ -75,6 +84,7 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """
+
     try:
         with PostgresDB() as cur:
             cur.execute(create_character_table_sql)
@@ -185,3 +195,40 @@ def get_app_setting(key):
         cur.execute("SELECT value FROM app_settings WHERE key = %s", (key,))
         res = cur.fetchone()
         return res['value'] if res else None
+    
+
+
+# ---------------------------------------------------------
+# 원정대 숙제 관리 (CRUD)
+# ---------------------------------------------------------
+
+def add_expedition_task(task_name, reset_type="WEEKLY", reset_value=1):
+    try:
+        with PostgresDB() as cur:
+            sql = """
+            INSERT INTO expedition_tasks (task_name, reset_type, reset_value) 
+            VALUES (%s, %s, %s) 
+            ON CONFLICT (task_name) DO NOTHING
+            """
+            cur.execute(sql, (task_name, reset_type, int(reset_value)))
+    except Exception as e:
+        print(f"원정대 숙제 추가 실패: {e}")
+
+def get_expedition_tasks():
+    with PostgresDB() as cur:
+        # 보여줄 때 어떤 리셋 규칙인지 같이 가져오면 좋음
+        cur.execute("SELECT * FROM expedition_tasks ORDER BY id ASC")
+        return cur.fetchall()
+
+def delete_expedition_task(task_id):
+    with PostgresDB() as cur:
+        cur.execute("DELETE FROM expedition_tasks WHERE id = %s", (task_id,))
+
+def update_expedition_task_check(task_id, is_checked):
+    with PostgresDB() as cur:
+        # 체크 상태 변경 시 updated_at도 갱신해야 리셋 로직이 동작함
+        cur.execute("""
+            UPDATE expedition_tasks 
+            SET is_checked = %s, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = %s
+        """, (is_checked, task_id))
