@@ -48,7 +48,8 @@
 1. **저장소 클론**
    ```bash
    git clone [https://github.com/prk7048/LOA-AGENT.git](https://github.com/prk7048/LOA-AGENT.git)
-   cd LOA-AGENT```
+   cd LOA-AGENT
+   ```
 
 2. 환경 변수 설정 (.env)
     프로젝트 루트에 .env 파일을 생성하고 API 키를 입력합니다.
