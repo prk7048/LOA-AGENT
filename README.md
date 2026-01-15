@@ -76,14 +76,15 @@
     
 ---
 
-## 향후 개선 계획 (Future Roadmap)
-- **Backend Migration:** 트래픽 증가 시 Python의 GIL(Global Interpreter Lock) 한계를 극복하기 위해 **Java (Spring Boot)** 또는 **Node.js (NestJS)**로 백엔드 서버 분리 예정.
-- **ORM 도입:** 현재의 Raw Query 방식을 JPA/TypeORM 등으로 고도화하여 유지보수성 향상.
-- **Client-Side Rendering:** Streamlit의 한계를 넘어 React/Vue.js를 도입하여 사용자 경험(UX) 고도화.
-
-
-## ✨ 주요 기능 (Key Features)
+## 주요 기능 (Key Features)
 1.  **Integrated Dashboard:** 숙제 체크, 골드 수급 현황, 원정대 정보를 한눈에 파악
 2.  **Market Intelligence:** 경매장 시세 추적 및 효율적인 아이템 구매 가이드
 3.  **Growth Diary:** 아이템 레벨/전투력 성장 추이 시각화 및 회고(Diary) 기능
 4.  **AI Commander:** 게임 패치 노트, 시장 동향, 내 스펙을 종합 분석하여 성장 방향성 제안
+
+---
+
+## 향후 개선 계획 (Future Roadmap)
+- **Backend Migration:** 트래픽 증가 시 Python의 GIL(Global Interpreter Lock) 한계를 극복하기 위해 **Java (Spring Boot)** 또는 **Node.js (NestJS)**로 백엔드 서버 분리 예정.
+- **ORM 도입:** 현재의 Raw Query 방식을 JPA/TypeORM 등으로 고도화하여 유지보수성 향상.
+- **Client-Side Rendering:** Streamlit의 한계를 넘어 React/Vue.js를 도입하여 사용자 경험(UX) 고도화.
